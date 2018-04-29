@@ -53,19 +53,42 @@ function manageOutput(element) {
 var json = {};
 
 /* headings */
+
 var headingsset = [];
 var headings = document.querySelectorAll('h1:not([role]) ,[role="heading"]');
 for (var i = 0; i < headings.length; i++) {
 	headingsset.push(manageOutput(headings[i]));
-}
+}	
+
 
 //if (headingsset.length > 0) {
 	addResultSet(browser.i18n.getMessage("msgHeadings"), {
 		name:  browser.i18n.getMessage("msgHeading") + (headingsset.length > 1 ? 's' : ''),
-		type: 'humanneeded',
+		type: 'failure',
 		data: headingsset
 	});
 //} 
+
+var badheadings = [];
+var allheadings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+for (var i = 0, n = 0, hn; i < allheadings.length; i++, n= hn) {                      /*hn correspond à heading number, on le compare au heading précédent qui est stocké dans n*/
+   hn = allheadings[i].tagName.slice(1);
+     if (hn-n>1) {
+     badheadings.push(manageOutput(allheadings[i]));
+     } 
+}
+
+//if (badheadings.length > 0) {
+	addResultSet(browser.i18n.getMessage("msgHeadings"), {
+		name:  'Ordre des headings' +(badheadings.length > 1 ? 's' : ''),
+		description: 'Evitez les headings plus petits avant ceux qui sont plus grand',
+		type: 'failure',
+		data: badheadings
+	});
+//} 
+
+
+
 
 /* Boutons */
 var buttonsset = [];
@@ -84,10 +107,21 @@ for (var i = 0; i < buttons.length; i++) {
 /* Images */
 var imageswithoutalt = [];
 var imageswithalt = [];
+var imageswithaltover80 = [];
 var imgs = document.querySelectorAll('img:not([role])');
 for (var i = 0; i < imgs.length; i++) {
-	(imgs[i].hasAttribute('alt') ? imageswithalt : imageswithoutalt).push(manageOutput(imgs[i]));
-}
+	 var textalt = (imgs[i].alt)
+		if (textalt){												/*Si le tableau image contient au moins une entrée, on teste les entrées une par une pour vérifier la longueur du alt*/
+			if ((textalt.length) > 80){
+			imageswithaltover80.push(manageOutput(imgs[i]));}			/*L'image est envoyée dans un tableau différent si elle vérifie la condition ou non*/
+			else {
+			imageswithalt.push(manageOutput(imgs[i]));}}
+		else {imageswithoutalt.push(manageOutput(imgs[i]));}
+	}
+		
+	
+	
+
 //if (imageswithoutalt.length > 0) {
 	addResultSet('Images', {
 		name: 'Image' + (imageswithoutalt.length > 1 ? 's' : '') + ' sans attribut alt',
@@ -96,6 +130,7 @@ for (var i = 0; i < imgs.length; i++) {
 		mark: '(alt=&quot;(?:(?!&quot;).)*&quot;)'
 	});
 //}
+
 //if (imageswithalt.length > 0) {
 	addResultSet('Images', {
 		name: 'Image' + (imageswithalt.length > 1 ? 's' : '') + ' avec attribut alt',
@@ -104,6 +139,20 @@ for (var i = 0; i < imgs.length; i++) {
 		mark: '(alt=&quot;(?:(?!&quot;).)*&quot;)'
 	});
 //}
+
+//if (imageswithaltover80.length > 0) {	                        /* On crée une nouvelle entrée avec la fonction addResultSet*/
+	addResultSet('Images', {
+		name: 'Image' + (imageswithaltover80.length > 1 ? 's' : '') + ' avec attribut alt ayant plus de 80 caractères',
+		description: 'Les alternatives aux images doivent être inférieures à 80 caractères.',
+		type: 'failure',
+		data: imageswithaltover80,
+		mark: '(alt=&quot;(?:(?!&quot;).)*&quot;)'
+	});
+//}	
+
+
+
+	
 
 /* Liens */
 var linksset = [];
